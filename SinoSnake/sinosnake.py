@@ -1,7 +1,6 @@
 import pygame, sys, random, re, pypinyin
 from pygame.math import Vector2
 from pypinyin import pinyin, Style
-import numpy as np
 
 class SNAKE:
     def __init__(self):
