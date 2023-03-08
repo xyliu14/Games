@@ -151,6 +151,7 @@ class MAIN:
 
     def check_collision(self):
         global zimu_score
+        zimu_eaten = ''
         for i in range(zimu_amount):
             if self.zimus[i].pos == self.snake.body[0]:
                 zimu_eaten = self.zimus[i].get_zimu()
@@ -260,8 +261,6 @@ zimu_list = sorted(open("allpinyin.txt","r").read())
 # zimu_cons = "cysjptfdwqbhnzmgr"
 # 0.7 for vowels and 2.3 for cons
 
-
-zimu_eaten = ''
 zimu_score = []                 # stores the eaten zimu
 
 zimu_font = pygame.font.Font('Font/Baloo2-VariableFont_wght.ttf', 30)
