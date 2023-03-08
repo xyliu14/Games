@@ -94,22 +94,24 @@ class SNAKE:
 
 class ZIMU: 
     def __init__(self):
-        # create an x and y position
-        # draw a square
         self.randomize()
     
-    def draw_fruit(self):
+    def draw_zimu(self):
         zimu_text = self.zimu
         zimu_surface = zimu_font.render(zimu_text, True, (56,74,12))
         zimu_rect = pygame.Rect(int(self.pos.x * cell_size), int(self.pos.y * cell_size), cell_size, cell_size)
         screen.blit(zimu_surface, zimu_rect)
-        #pygame.draw.rect(screen,(250,142,22),fruit_rect)
         
     def randomize(self):
         self.x = random.randint(0,cell_number - 1)
         self.y = random.randint(0,cell_number - 2)     # zimu cannot be covered by score so self.y excludes the last row
         self.pos = Vector2(self.x, self.y)
-        self.zimu = random.choice(zimu_list)
+        if zimu_eaten in zimu_cons and zimu_eaten != "":         # if cons then next would be vowel
+            self.zimu = random.choice(zimu_vowels)
+        elif zimu_eaten in zimu_vowels and zimu_eaten != "":     # vice versa
+            self.zimu = random.choice(zimu_cons)
+        else:
+            self.zimu = random.choice(zimu_list)
     
     def get_zimu(self):
         return self.zimu
@@ -130,7 +132,7 @@ class MAIN:
     def draw_elements(self):
         self.draw_grass()
         for i in range(zimu_amount):
-            self.zimus[i].draw_fruit()
+            self.zimus[i].draw_zimu()
         self.snake.draw_snake()
         self.draw_score()
         self.update_level()
@@ -151,14 +153,14 @@ class MAIN:
 
     def check_collision(self):
         global zimu_score
-        zimu_eaten = ''
+        global zimu_eaten
         for i in range(zimu_amount):
             if self.zimus[i].pos == self.snake.body[0]:
                 zimu_eaten = self.zimus[i].get_zimu()
                 zimu_score.append(zimu_eaten)
-
-                for j in range(zimu_amount):                 # reposition all fruits
-                    self.zimus[j].randomize()                # reposition just one fruit
+                for j in range(zimu_amount):                    # reposition zimu by random
+                    if random.randint(0,1) == 1:
+                        self.zimus[j].randomize()              
                 self.snake.add_block()
                 self.snake.play_sound()
             
@@ -166,10 +168,13 @@ class MAIN:
                 if block == self.zimus[i].pos:
                     self.zimus[i].randomize()
             
-            for a in range(1,zimu_amount):                    # check if zimu spwans on existing zimu
-                if self.zimus[a].pos == self.zimus[a-1].pos:
-                    self.zimus[a].randomize()
-
+            zimu_pos = []
+            for posit in range(zimu_amount):                    # check if zimu spwans on existing zimu
+                zimu_pos.append(self.zimus[posit].pos)
+            for posit in range(zimu_amount):
+                if self.zimus[posit].pos in zimu_pos[posit+1:]:
+                    print(zimu_pos)
+                    self.zimus[posit].randomize()
     
     def check_fail(self):
         if not 0 <= self.snake.body[0].x < cell_number or not 0 <= self.snake.body[0].y < cell_number:
@@ -181,26 +186,12 @@ class MAIN:
             self.game_over()
     
     def game_over(self):
-        global level
         self.snake.reset()
         zimu_score.clear()
-        level = 1
-#        pygame.quit()
-#        sys.exit()
+        self.zimu_reset()
     
     def draw_score(self):
         global zimu_score
-        # #score_text = str(len(self.snake.body) - 3)
-        # #score_surface = zimu_font.render("Your score is: " + score_text, True, (56,74,12))
-        # score_x = int(cell_size * cell_number - 120)
-        # score_y = int(cell_size * cell_number - 80)
-        # score_rect = score_surface.get_rect(center = (score_x, score_y))
-        # apple_rect = apple.get_rect(midright = (score_rect.left,score_rect.centery))
-        # bg_rect = pygame.Rect(apple_rect.left,apple_rect.top,apple_rect.width + score_rect.width + 6,apple_rect.height)
-        
-        # pygame.draw.rect(screen,(167,209,61),bg_rect)
-        # screen.blit(score_surface,score_rect)
-        # pygame.draw.rect(screen,(56,74,12),bg_rect,2)
 
         zimu_x = int(cell_size * cell_number % 2)
         zimu_y = int(cell_size * cell_number - 40)
@@ -233,6 +224,7 @@ class MAIN:
             if re.search("[\u4e00-\u9FFF]", zimu_score[i]): 
                 hanzi_amount += 1
                 if hanzi_amount == level_goal:
+                    #self.paused()
                     level += 1
                     hanzi_amount = 0
                     zimu_score.clear()
@@ -240,16 +232,37 @@ class MAIN:
         level_surface = zimu_font.render(level_text + "letter(s)", True, (56,74,12))
         level_rect = pygame.Rect(int(cell_size * cell_number - 180), int(cell_size * cell_number - 120), cell_size, cell_size)
         screen.blit(level_surface, level_rect)
+    
+    def zimu_reset(self):
+        global zimu_amount
+        global level
+        level = 1
+        zimu_amount = 5
+    
+    # def paused(self):
+    #     i = 10
+    #     while i > 0:
+    #         for event in pygame.event.get():
+    #             if event.type == pygame.QUIT:
+    #                 pygame.quit()
+    #                 quit()
+    #         #pygame.display.update()
+    #         clock.tick(game_speed)
+    #         i -= 1
+
 
 pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
 cell_size = 40
 cell_number = 20
-zimu_amount = 6
+zimu_amount = 5
 level = 1
-level_goal = 3
+level_goal = 2
+zimu_eaten = ""
 
+# game_display = pygame.Surface((cell_number*cell_size, cell_number*cell_size))
 screen = pygame.display.set_mode((cell_number * cell_size, cell_number * cell_size))
+
 clock = pygame.time.Clock()
 
 hanzi_list = open("3500hanzi.txt","r").read().replace('\n','')
@@ -257,8 +270,8 @@ hanzi_list = open("3500hanzi.txt","r").read().replace('\n','')
 pinyin_file = open("3500pinyin.txt","r").read()
 pinyin_list = pinyin_file.split(" ")
 zimu_list = sorted(open("allpinyin.txt","r").read())
-# zimu_vowels = "ōeěēíáǘaǜūuǎiǒüǐā"
-# zimu_cons = "cysjptfdwqbhnzmgr"
+zimu_vowels = "ōeěēíáǘaǜūuǎiǒüǐā"
+zimu_cons = "cysjptfdwqbhnzmgr"
 # 0.7 for vowels and 2.3 for cons
 
 zimu_score = []                 # stores the eaten zimu
@@ -292,7 +305,7 @@ while True:
             if event.key == pygame.K_d:
                 if main_game.snake.direction.x != -1:
                     main_game.snake.direction = Vector2(1,0)
-            
+
     screen.fill((249, 241, 219))
     main_game.draw_elements()
     pygame.display.update()
