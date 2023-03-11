@@ -266,7 +266,7 @@ class MAIN:
         title_surface = zimu_font.render(title_text, True, (56,74,12))
         title_surface2 = zimu_font.render(title_text2, True, (56,74,12))
         screen.blit(title_surface,(title_x,title_y))
-        screen.blit(title_surface2,(title_x, title_y + 20))
+        screen.blit(title_surface2,(title_x, title_y + 30))
 
 
 pygame.mixer.pre_init(44100,-16,2,512)
@@ -275,7 +275,7 @@ cell_size = 20
 cell_number = 20
 zimu_amount = 5
 level = 1
-level_goal = 1
+level_goal = 2
 zimu_eaten = ""
 show_congrats = False
 
