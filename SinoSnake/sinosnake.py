@@ -105,7 +105,7 @@ class ZIMU:
         
     def randomize(self):
         self.x = random.randint(0,cell_number - 1)
-        self.y = random.randint(0,cell_number - 2)     # zimu cannot be covered by score so self.y excludes the last row
+        self.y = random.randint(0,cell_number - 1)
         self.pos = Vector2(self.x, self.y)
         if zimu_eaten in zimu_cons and zimu_eaten != "":         # if cons then next would be vowel
             self.zimu = random.choice(zimu_vowels)
