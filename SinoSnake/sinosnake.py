@@ -99,8 +99,8 @@ class ZIMU:
     def draw_zimu(self):
         zimu_text = self.zimu
         zimu_surface = zimu_font.render(zimu_text, True, (56,74,12))
-        zimu_rect = pygame.Rect(int(self.pos.x * cell_size + 4) + cell_number*cell_size/2, \
-                                int(self.pos.y * cell_size - 6) + 100, cell_size, cell_size)
+        zimu_rect = pygame.Rect(int(self.pos.x * cell_size + 5) + cell_number*cell_size/2, \
+                                int(self.pos.y * cell_size - 8) + 100, cell_size, cell_size)
         screen.blit(zimu_surface, zimu_rect)
         
     def randomize(self):
@@ -238,7 +238,7 @@ class MAIN:
                     hanzi_amount = 0
                     zimu_score.clear()
                     show_congrats = True
-        level_text = "Current level: combine " + str(level+1) + " letters"
+        level_text = "Combine " + str(level+1) + " letters"
         level_surface = zimu_font.render(level_text, True, (56,74,12))
         screen.blit(level_surface, (int(cell_size * cell_number * 1.6), int(cell_size * cell_number)))
 
@@ -271,8 +271,8 @@ class MAIN:
 
 pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
-cell_size = 20
-cell_number = 20
+cell_size = 30
+cell_number = 15
 zimu_amount = 5
 level = 1
 level_goal = 2
@@ -295,8 +295,8 @@ zimu_cons = "cysjptfdwqbhnzmgr"
 
 zimu_score = []                 # stores the eaten zimu
 
-zimu_font = pygame.font.Font('Font/Baloo2-VariableFont_wght.ttf', cell_size)
-hanzi_font = pygame.font.Font('Font/ZCOOLKuaiLe-Regular.ttf', cell_size)
+zimu_font = pygame.font.Font('Font/Baloo2-VariableFont_wght.ttf', cell_size-5)
+hanzi_font = pygame.font.Font('Font/ZCOOLKuaiLe-Regular.ttf', cell_size-5)
 game_speed = 60
 
 SCREEN_UPDATE = pygame.USEREVENT
@@ -326,9 +326,9 @@ while True:
                     main_game.snake.direction = Vector2(1,0)
 
     screen.fill((249,241,219))
-    game_display.fill((249, 244, 220))
     screen.blit(game_display, (cell_number*cell_size/2, 100))
-    pygame.draw.rect(screen, (56,74,12), pygame.Rect(198, 98, cell_number*cell_size+4, cell_number*cell_size+24), 2)
+    game_display.fill((249, 244, 220))
+    pygame.draw.rect(screen, (56,74,12), pygame.Rect(223, 98, cell_number*cell_size+4, cell_number*cell_size+34), 2)
     main_game.draw_elements()
     pygame.display.update()
     clock.tick(game_speed)
