@@ -4,8 +4,8 @@ from pypinyin import pinyin, Style
 
 class SNAKE:
     def __init__(self):
-        self.body = [Vector2(5,10), Vector2(4,10), Vector2(3,10)]
-        self.direction = Vector2(0,0)
+        self.body = [Vector2(205,10), Vector2(204,10), Vector2(203,10)]
+        self.direction = Vector2(200,0)
         self.new_block = False
     
         self.head_up = pygame.image.load('Graphics/head_up.png').convert_alpha()
@@ -32,8 +32,8 @@ class SNAKE:
         self.update_tail_graphics()
 
         for index,block in enumerate(self.body):
-            x_pos = int(block.x * cell_size)
-            y_pos = int(block.y * cell_size)
+            x_pos = int(block.x * cell_size) + cell_number*cell_size/2
+            y_pos = int(block.y * cell_size) + 100
             block_rect = pygame.Rect(x_pos, y_pos, cell_size, cell_size)
         
             if index == 0:
@@ -99,7 +99,8 @@ class ZIMU:
     def draw_zimu(self):
         zimu_text = self.zimu
         zimu_surface = zimu_font.render(zimu_text, True, (56,74,12))
-        zimu_rect = pygame.Rect(int(self.pos.x * cell_size), int(self.pos.y * cell_size), cell_size, cell_size)
+        zimu_rect = pygame.Rect(int(self.pos.x * cell_size + 4) + cell_number*cell_size/2, \
+                                int(self.pos.y * cell_size - 6) + 100, cell_size, cell_size)
         screen.blit(zimu_surface, zimu_rect)
         
     def randomize(self):
@@ -136,6 +137,7 @@ class MAIN:
         self.snake.draw_snake()
         self.draw_score()
         self.update_level()
+        self.draw_title()
 
     def draw_grass(self):
         grass_color = (248,232,193)
@@ -143,12 +145,14 @@ class MAIN:
             if col % 2 == 0:
                 for row in range(cell_number):
                     if row % 2 == 0:
-                        grass_rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+                        grass_rect = pygame.Rect(col * cell_size+cell_number*cell_size/2,\
+                                                  row * cell_size+100, cell_size, cell_size)
                         pygame.draw.rect(screen, grass_color, grass_rect)
             else:
                 for row in range(cell_number):
                     if row % 2 != 0:
-                        grass_rect = pygame.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+                        grass_rect = pygame.Rect(col * cell_size+cell_number*cell_size/2,\
+                                                  row * cell_size+100, cell_size, cell_size)
                         pygame.draw.rect(screen, grass_color, grass_rect)
 
     def check_collision(self):
@@ -177,7 +181,8 @@ class MAIN:
                     self.zimus[posit].randomize()
     
     def check_fail(self):
-        if not 0 <= self.snake.body[0].x < cell_number or not 0 <= self.snake.body[0].y < cell_number:
+        if not 0 <= self.snake.body[0].x < cell_number\
+              or not 0 <= self.snake.body[0].y < cell_number:
             self.game_over()
         for block in self.snake.body[1:]:
             if block == self.snake.body[0]:
@@ -193,8 +198,8 @@ class MAIN:
     def draw_score(self):
         global zimu_score
 
-        zimu_x = int(cell_size * cell_number % 2)
-        zimu_y = int(cell_size * cell_number - 40)
+        zimu_x = int(cell_size * cell_number % 2)+cell_number*cell_size/2
+        zimu_y = int(cell_size * cell_number) + 100
         bg_rect = pygame.Rect(zimu_x, zimu_y, cell_size * cell_number, cell_size)
         pygame.draw.rect(screen,(167,209,61),bg_rect)
         
@@ -209,59 +214,73 @@ class MAIN:
                 target_pinyin = ""
 
         for j in range(len(zimu_score)):
-            zimu_rect = pygame.Rect(zimu_x, zimu_y, cell_size, cell_size)
+            zimu_rect = pygame.Rect(zimu_x, zimu_y - 6, cell_size, cell_size)
+            hanzi_rect = pygame.Rect(zimu_x, zimu_y, cell_size, cell_size)
             if re.search("[\u4e00-\u9FFF]", zimu_score[j]):             # check if the target word is chinese or letter 
                 test_surface = hanzi_font.render(zimu_score[j], True, (56,74,12))
+                screen.blit(test_surface, hanzi_rect)
             else:
                 test_surface = zimu_font.render(zimu_score[j], True, (56,74,12))
-            screen.blit(test_surface, zimu_rect)
-            zimu_x += 40
+                screen.blit(test_surface, zimu_rect)
+            zimu_x += 20
     
     def update_level(self):
         global level
+        global show_congrats
         hanzi_amount = 0
+        congrats_text = "Level Up!"
+        congrats_surface = zimu_font.render(congrats_text, True, (56,74,12))
         for i in range(len(zimu_score)):
             if re.search("[\u4e00-\u9FFF]", zimu_score[i]): 
                 hanzi_amount += 1
                 if hanzi_amount == level_goal:
-                    #self.paused()
                     level += 1
                     hanzi_amount = 0
                     zimu_score.clear()
-        level_text = str(level+1)
-        level_surface = zimu_font.render(level_text + "letter(s)", True, (56,74,12))
-        level_rect = pygame.Rect(int(cell_size * cell_number - 180), int(cell_size * cell_number - 120), cell_size, cell_size)
-        screen.blit(level_surface, level_rect)
+                    show_congrats = True
+        level_text = "Current level: combine " + str(level+1) + " letters"
+        level_surface = zimu_font.render(level_text, True, (56,74,12))
+        screen.blit(level_surface, (int(cell_size * cell_number * 1.6), int(cell_size * cell_number)))
+
+        timer = 0
+        show_congrats_time = 0.017
+        if show_congrats == True:
+            elapsed = clock.tick(game_speed)
+            timer = timer + elapsed/1000
+            screen.blit(congrats_surface, (int(cell_size * cell_number * 1.6), int(cell_size * cell_number)-60))
+            if timer > show_congrats_time:
+                show_congrats = False
     
     def zimu_reset(self):
         global zimu_amount
         global level
         level = 1
         zimu_amount = 5
-    
-    # def paused(self):
-    #     i = 10
-    #     while i > 0:
-    #         for event in pygame.event.get():
-    #             if event.type == pygame.QUIT:
-    #                 pygame.quit()
-    #                 quit()
-    #         #pygame.display.update()
-    #         clock.tick(game_speed)
-    #         i -= 1
+
+    def draw_title(self):
+        title_x = int(cell_size * cell_number * 1.6)
+        title_y = int(cell_size * cell_number) - 200
+
+        title_text = "Welcome to SinoSnake 1.0!"
+        title_text2 = "Press 'w,s,a,d' to start"  
+        title_surface = zimu_font.render(title_text, True, (56,74,12))
+        title_surface2 = zimu_font.render(title_text2, True, (56,74,12))
+        screen.blit(title_surface,(title_x,title_y))
+        screen.blit(title_surface2,(title_x, title_y + 20))
 
 
 pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
-cell_size = 40
+cell_size = 20
 cell_number = 20
 zimu_amount = 5
 level = 1
-level_goal = 2
+level_goal = 1
 zimu_eaten = ""
+show_congrats = False
 
-# game_display = pygame.Surface((cell_number*cell_size, cell_number*cell_size))
-screen = pygame.display.set_mode((cell_number * cell_size, cell_number * cell_size))
+game_display = pygame.Surface((cell_number*cell_size, cell_number*cell_size))
+screen = pygame.display.set_mode((cell_number * cell_size + 600, cell_number * cell_size + 200))
 
 clock = pygame.time.Clock()
 
@@ -276,8 +295,8 @@ zimu_cons = "cysjptfdwqbhnzmgr"
 
 zimu_score = []                 # stores the eaten zimu
 
-zimu_font = pygame.font.Font('Font/Baloo2-VariableFont_wght.ttf', 30)
-hanzi_font = pygame.font.Font('Font/ZCOOLKuaiLe-Regular.ttf', 30)
+zimu_font = pygame.font.Font('Font/Baloo2-VariableFont_wght.ttf', cell_size)
+hanzi_font = pygame.font.Font('Font/ZCOOLKuaiLe-Regular.ttf', cell_size)
 game_speed = 60
 
 SCREEN_UPDATE = pygame.USEREVENT
@@ -306,7 +325,10 @@ while True:
                 if main_game.snake.direction.x != -1:
                     main_game.snake.direction = Vector2(1,0)
 
-    screen.fill((249, 241, 219))
+    screen.fill((249,241,219))
+    game_display.fill((249, 244, 220))
+    screen.blit(game_display, (cell_number*cell_size/2, 100))
+    pygame.draw.rect(screen, (56,74,12), pygame.Rect(198, 98, cell_number*cell_size+4, cell_number*cell_size+24), 2)
     main_game.draw_elements()
     pygame.display.update()
     clock.tick(game_speed)
