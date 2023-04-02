@@ -4,7 +4,7 @@ const context = canvas.getContext('2d');
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
 
-const foodCount = 5; // Number of food items you want on the board
+const foodCount = 3; // Number of food items you want on the board
 const snakeSpeed = 100;
 
 let snake = [{ x: 10, y: 10 }];
@@ -15,9 +15,11 @@ let eatenLetters = [];
 let currentPinyinIndex = 0; 
 let pinyinDictionary;
 let chineseWords;
+let targetWord;
 let requiredPinyinLetters;
 let isGameOver = false;
-//let score = 0;
+let score = 0;
+let highScore = 0;
 
 
 
@@ -61,7 +63,7 @@ loadFiles();
 function generateTargetWord(chineseWords, pinyinDictionary) {
   // Display a random Chinese word
   const randomWordIndex = Math.floor(Math.random() * chineseWords.length);
-  const targetWord = chineseWords[randomWordIndex];
+  targetWord = chineseWords[randomWordIndex];
   displayTargetWord(targetWord);
   const targetWordPinyin = targetWord.split('').map((char) => getPinyinForCharacter(char, pinyinDictionary));
   requiredPinyinLetters = targetWordPinyin.join('').split('');
@@ -182,6 +184,10 @@ function checkFoodCollision() {
         currentPinyinIndex++;
         if (currentPinyinIndex >= requiredPinyinLetters.length) {
           // If all the required letters have been eaten, display the next target word
+          score += targetWord.length * 100;
+          if (score > highScore) {
+            highScore = score;
+          }
           currentPinyinIndex = 0;
           clearEatenLettersDisplay();
           eatenLetters = [];
@@ -195,6 +201,7 @@ function checkFoodCollision() {
               food.push(generateFood()); // Generate food with a random letter
             }
           }
+          
         } else {
           food = [];
           for (let i = 0; i < foodCount; i++) {
@@ -212,8 +219,6 @@ function checkFoodCollision() {
     }
   }
 }
-
-
 
 function isOutOfBounds() {
     const head = snake[0];
@@ -248,8 +253,17 @@ function draw() {
       context.fillStyle = 'transparent';
     }
   }
+
+  drawScore();
 }
 
+function drawScore() {
+  const ctx = canvas.getContext('2d');
+  ctx.font = '18px Arial';
+  ctx.fillStyle = 'white';
+  ctx.fillText('Score: ' + score, 10, 30);
+  ctx.fillText('High Score: ' + highScore, 10, 60);
+}
 
 function gameOver() {
   isGameOver = true;
@@ -288,8 +302,6 @@ function gameOver() {
   });
 }
 
-
-
 function restartGame() {
   snake = [{ x: 10, y: 10 }];
   velocity = { x: 0, y: 0 };
@@ -297,6 +309,7 @@ function restartGame() {
   food = [];
   eatenLetters = [];
   isGameOver = false;
+  score = 0;
 
   // Remove the "Play Again" button from the DOM
   const button = document.getElementById('play-again-button');
