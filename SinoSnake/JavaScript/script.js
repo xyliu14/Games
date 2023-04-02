@@ -4,59 +4,122 @@ const context = canvas.getContext('2d');
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
 
-const foodCount = 3; // Number of food items you want on the board
+const foodCount = 5; // Number of food items you want on the board
+const snakeSpeed = 100;
+
 let snake = [{ x: 10, y: 10 }];
 let velocity = { x: 0, y: 0 };
 let food = [];
 let growSnake = false;
 let eatenLetters = [];
+let currentPinyinIndex = 0; 
+let pinyinDictionary;
+let chineseWords;
+let requiredPinyinLetters;
+let isGameOver = false;
+//let score = 0;
+
+
 
 const pinyinLetters = ['ā', 'á', 'ǎ', 'à', 'a', 'ō', 'ó', 'ǒ', 'ò', 'o', 'ē', 'é', 'ě', 'è', 'e', 
                         'ī', 'í', 'ǐ', 'ì', 'i', 'ū', 'ú', 'ǔ', 'ù', 'u', 'ǖ', 'ǘ', 'ǚ', 'ǜ', 'ü', 
                         'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'zh', 
                         'ch', 'sh', 'r', 'z', 'c', 's', 'y', 'w'];
 
-let dictionary = {};
-// Fetch the file using an AJAX request
-fetch('test.txt')
-  .then(response => response.text())
-  .then(fileContents => {
-    const lines = fileContents.split('\n');
-    const characters = lines.map(line => line.replace('\n', ''));
 
-    const dictionary = {}; // empty object to store the dictionary
+// Load the files and parse them into the appropriate data structures
+async function loadFiles() {
+  const chineseWordsResponse = await fetch('asset/chinese_words.txt');
+  chineseWords = (await chineseWordsResponse.text()).split('\n');
 
-    for (let i = 0; i < characters.length; i++) {
-      const char = characters[i];
-      const pinyinList = pinyin(char);
-      for (let j = 0; j < pinyinList.length; j++) {
-        const pinyinStr = pinyinList[j];
-        if (!dictionary[pinyinStr]) {
-          dictionary[pinyinStr] = [];
-        }
-        dictionary[pinyinStr].push(char);
-      }
+  const pinyinDictionaryResponse = await fetch('pinyin-dictionary.txt');
+  const pinyinDictionaryText = await pinyinDictionaryResponse.text();
+  pinyinDictionary = parsePinyinDictionary(pinyinDictionaryText);
+
+  startGame(chineseWords, pinyinDictionary);
+}
+
+
+function parsePinyinDictionary(fileContents) {
+  const lines = fileContents.split('\n');
+  const dictionary = {};
+
+  for (let line of lines) {
+    const [char, pinyin] = line.split(',');
+
+    if (!dictionary[pinyin]) {
+      dictionary[pinyin] = [];
     }
-  })
-  .catch(error => {
-    console.error('Error fetching the file:', error);
-  });
-  
+    dictionary[pinyin].push(char);
+  }
+
+  return dictionary;
+}
+
+loadFiles();
+
+function generateTargetWord(chineseWords, pinyinDictionary) {
+  // Display a random Chinese word
+  const randomWordIndex = Math.floor(Math.random() * chineseWords.length);
+  const targetWord = chineseWords[randomWordIndex];
+  displayTargetWord(targetWord);
+  const targetWordPinyin = targetWord.split('').map((char) => getPinyinForCharacter(char, pinyinDictionary));
+  requiredPinyinLetters = targetWordPinyin.join('').split('');
+
+  currentPinyinIndex = 0;
+}
+
+function startGame(chineseWords, pinyinDictionary) {
+  // Your existing game initialization code
+
+  generateTargetWord(chineseWords, pinyinDictionary);
+
+  // Generate initial food positions
+  for (let i = 0; i < foodCount; i++) {
+    if (i === 0) {
+      food.push(generateFood(requiredPinyinLetters[currentPinyinIndex])); // Generate food with the first required letter
+    } else {
+      food.push(generateFood()); // Generate food with a random letter
+    }
+  }
+
+  food = food.filter((item, index, self) => 
+    index === self.findIndex((t) => (t.x === item.x && t.y === item.y))
+  );
+
+  // Fill up the food array if duplicates were removed
+  while (food.length < foodCount) {
+    food.push(generateFood());
+  }
+
+  // Your existing game loop code
+  gameLoop();
+}
 
 function gameLoop() {
-    moveSnake();
+  if (isGameOver) {
+    return;
+  }
   
-    if (isOutOfBounds()) {
-      gameOver();
-      return;
-    }
+  moveSnake();
   
-    checkFoodCollision();
-    checkSnakeCollision();
-    draw();
+  if (isOutOfBounds()) {
+    gameOver();
+    isGameOver = true;
+    return;
+  }
   
-    setTimeout(gameLoop, 100);
-}  
+  checkFoodCollision();
+  checkSnakeCollision();
+  draw();
+  
+  setTimeout(gameLoop, snakeSpeed);
+}
+
+function displayTargetWord(word) {
+  const targetWordElement = document.getElementById('target-word');
+  targetWordElement.textContent = word;
+}
 
 function moveSnake() {
     const head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
@@ -98,36 +161,59 @@ function generateValidFoodPosition() {
   
     return { x, y };
 }
-  
 
-function randomizeFoodPosition() {
-    for (let i = 0; i < foodCount; i++) {
-        const position = generateValidFoodPosition();
-        const letter = pinyinLetters[Math.floor(Math.random() * pinyinLetters.length)];
-        food.push({ x: position.x, y: position.y, letter });
-      }
+function generateFood(letter) {
+  const position = generateValidFoodPosition();
+  letter = letter || pinyinLetters[Math.floor(Math.random() * pinyinLetters.length)]; // Use the provided letter or pick a random one
+  return { x: position.x, y: position.y, letter };
 }
 
 function checkFoodCollision() {
-    for (let i = 0; i < food.length; i++) {
-        if (snake[0].x === food[i].x && snake[0].y === food[i].y) {
-          // Signal to grow the snake in the next iteration
-          const eatenLetter = food[i].letter;
-          eatenLetters.push(eatenLetter);
-          
-          displayEatenLetters();
+  for (let i = 0; i < food.length; i++) {
+    if (snake[0].x === food[i].x && snake[0].y === food[i].y) {
+      // Signal to grow the snake in the next iteration
+      const eatenLetter = food[i].letter;
+      eatenLetters.push(eatenLetter);
+      displayEatenLetters();
+      growSnake = true;
 
-          growSnake = true;
-    
-          // Replace all food items with new ones
-          for (let j = 0; j < food.length; j++) {
-            const position = generateValidFoodPosition();
-            const letter = pinyinLetters[Math.floor(Math.random() * pinyinLetters.length)];
-            food[j] = { x: position.x, y: position.y, letter };
+      // Replace the eaten food item with the next required letter or a random letter
+      if (eatenLetter === requiredPinyinLetters[currentPinyinIndex]) {
+        currentPinyinIndex++;
+        if (currentPinyinIndex >= requiredPinyinLetters.length) {
+          // If all the required letters have been eaten, display the next target word
+          currentPinyinIndex = 0;
+          clearEatenLettersDisplay();
+          eatenLetters = [];
+          generateTargetWord(chineseWords, pinyinDictionary);
+          // Generate new food items while containing the next target letter
+          food = [];
+          for (let i = 0; i < foodCount; i++) {
+            if (i === 0) {
+              food.push(generateFood(requiredPinyinLetters[currentPinyinIndex])); // Generate food with the next required letter
+            } else {
+              food.push(generateFood()); // Generate food with a random letter
+            }
+          }
+        } else {
+          food = [];
+          for (let i = 0; i < foodCount; i++) {
+            if (i === 0) {
+              food.push(generateFood(requiredPinyinLetters[currentPinyinIndex])); // Generate food with the next required letter
+            } else {
+              food.push(generateFood()); // Generate food with a random letter
+            }
           }
         }
+      } else {
+        gameOver(); // Call the gameOver function if the target letter is not eaten
+        return;
+      }
     }
+  }
 }
+
+
 
 function isOutOfBounds() {
     const head = snake[0];
@@ -144,14 +230,15 @@ function checkSnakeCollision() {
 }
 
 function draw() {
-    context.fillStyle = 'papayawhip';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'papayawhip';
+  context.fillRect(0, 0, canvas.width, canvas.height);
 
+  if (!isGameOver) {
     context.fillStyle = 'lime';
     for (let cell of snake) {
       context.fillRect(cell.x * gridSize, cell.y * gridSize, gridSize - 2, gridSize - 2);
     }
-  
+
     context.fillStyle = 'transparent';
     context.font = '16px sans-serif';
     for (let f of food) {
@@ -160,70 +247,109 @@ function draw() {
       context.fillText(f.letter, f.x * gridSize + 4, f.y * gridSize + gridSize / 2 + 4);
       context.fillStyle = 'transparent';
     }
+  }
 }
 
+
 function gameOver() {
-    // Clear the canvas
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    clearEatenLettersDisplay();
-  
-    // Display "Game Over" text
+  isGameOver = true;
+  clearEatenLettersDisplay();
+
+  // Display the correct target word
+  const targetWordElement = document.getElementById('target-word');
+  targetWordElement.textContent = requiredPinyinLetters.join('');
+
+  // Clear the canvas
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw background
+  context.fillStyle = 'papayawhip';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Delay the drawing of the "Game Over" text
+  setTimeout(() => {
     context.fillStyle = 'black';
     context.font = '48px sans-serif';
     context.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2 - 50);
-  
-    // Create and display the "Play Again" button
-    const button = document.createElement('button');
-    button.innerHTML = 'Play Again';
-    button.style.position = 'absolute';
-    button.style.left = (canvas.width / 2 - 50) + 'px';
-    button.style.top = (canvas.height / 2) + 'px';
-    document.body.appendChild(button);
-  
-    // Restart the game when the button is clicked
-    button.addEventListener('click', () => {
-      document.body.removeChild(button);
-      restartGame();
-    });
+  }, 100);
+
+  // Create and display the "Play Again" button
+  const button = document.createElement('button');
+  button.innerHTML = 'Play Again';
+  button.style.position = 'absolute';
+  button.style.left = (canvas.width / 2 - 50) + 'px';
+  button.style.top = (canvas.height / 2) + 'px';
+  document.body.appendChild(button);
+
+  // Restart the game when the button is clicked
+  button.addEventListener('click', () => {
+    document.body.removeChild(button);
+    restartGame();
+  });
 }
+
+
 
 function restartGame() {
-    snake = [{ x: 10, y: 10 }];
-    velocity = { x: 0, y: 0 };
-    growSnake = false;
-    food = [];
-    randomizeFoodPosition();
-    gameLoop();
+  snake = [{ x: 10, y: 10 }];
+  velocity = { x: 0, y: 0 };
+  growSnake = false;
+  food = [];
+  eatenLetters = [];
+  isGameOver = false;
+
+  // Remove the "Play Again" button from the DOM
+  const button = document.getElementById('play-again-button');
+  if (button) {
+    button.parentNode.removeChild(button);
+  }
+
+  // Generate a new target word
+  generateTargetWord(chineseWords, pinyinDictionary);
+
+  // Generate initial food positions
+  for (let i = 0; i < foodCount; i++) {
+    if (i === 0) {
+      food.push(generateFood(requiredPinyinLetters[currentPinyinIndex])); // Generate food with the first required letter
+    } else {
+      food.push(generateFood()); // Generate food with a random letter
+    }
+  }
+
+  // Remove duplicates from the food array
+  food = food.filter((item, index, self) =>
+    index === self.findIndex((t) => (t.x === item.x && t.y === item.y))
+  );
+
+  // Fill up the food array if duplicates were removed
+  while (food.length < foodCount) {
+    food.push(generateFood());
+  }
+
+  gameLoop();
 }
 
-function displayEatenLetters() {
-    const eatenLettersElement = document.getElementById('eaten-letters');
-    eatenLettersElement.innerHTML = '';
-  
-    for (let i = 0; i < eatenLetters.length; i++) {
-      const letterElement = document.createElement('span');
-      letterElement.textContent = eatenLetters[i];
-      eatenLettersElement.appendChild(letterElement);
+
+function getPinyinForCharacter(character, pinyinDictionary) {
+  for (const pinyin in pinyinDictionary) {
+    if (pinyinDictionary[pinyin].includes(character)) {
+      return pinyin;
     }
-    
-    //   // Display the Chinese character under the eaten-letters div
-    if (eatenLetters.length >= 2) {
-        const lastTwoLetters = eatenLetters.slice(-2).join('');
-        console.log('Last two letters:', lastTwoLetters);
-        
-        const correspondingCharacters = dictionary[lastTwoLetters];
-        console.log('Corresponding characters:', correspondingCharacters);
-        
-        if (correspondingCharacters && correspondingCharacters.length > 0) {
-          const randomIndex = Math.floor(Math.random() * correspondingCharacters.length);
-          const chineseCharacter = correspondingCharacters[randomIndex];
-          console.log('Chinese character:', chineseCharacter);
-          
-          const chineseCharacterElement = document.createElement('div');
-          chineseCharacterElement.textContent = chineseCharacter;
-          eatenLettersElement.appendChild(chineseCharacterElement);
-        }
-      }
+  }
+
+  return ''; // Return an empty string if the character's pinyin is not found
+}
+
+
+function displayEatenLetters() {
+  const eatenLettersElement = document.getElementById('eaten-letters');
+  eatenLettersElement.innerHTML = '';
+  
+  for (let i = 0; i < eatenLetters.length; i++) {
+    const letterElement = document.createElement('span');
+    letterElement.textContent = eatenLetters[i];
+    eatenLettersElement.appendChild(letterElement);
+  }
 }
 
 function clearEatenLettersDisplay() {
@@ -251,6 +377,3 @@ document.addEventListener('keydown', (event) => {
       break;
   }
 });
-
-randomizeFoodPosition(); // Initialize food positions
-gameLoop(); // Start the game loop

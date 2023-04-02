@@ -2,25 +2,41 @@ const fs = require('fs');
 const pinyin = require('pinyin').default;
 
 
-const fileContents = fs.readFileSync('test.txt', 'utf8');
+const fileContents = fs.readFileSync('asset/chinese_characters.txt', 'utf8');
 const lines = fileContents.split('\n');
 const characters = lines.map(line => line.replace('\n', ''));
 
-  const dictionary = {}; // empty object to store the dictionary
-  
-  for (let i = 0; i < characters.length; i++) {
-    const char = characters[i];
-    const pinyinList = pinyin(char);
-    for (let j = 0; j < pinyinList.length; j++) {
-      const pinyinStr = pinyinList[j];
-      if (!dictionary[pinyinStr]) {
-        dictionary[pinyinStr] = [];
-      }
-      dictionary[pinyinStr].push(char);
-    }
+const dictionary = characters.map(char => {
+  const pinyinStr = pinyin(char).flat().join('');
+  return `${char},${pinyinStr}`;
+});
+
+fs.writeFile('pinyin-dictionary.txt', dictionary.join('\n'), (err) => {
+  if (err) {
+    console.error('Error writing the file:', err);
+  } else {
+    console.log('Pinyin dictionary saved successfully.');
   }
+});
+
+
+
+
+// const dictionary = {}; // empty object to store the dictionary
   
-  console.log(dictionary);
+  // for (let i = 0; i < characters.length; i++) {
+  //   const char = characters[i];
+  //   const pinyinList = pinyin(char);
+  //   for (let j = 0; j < pinyinList.length; j++) {
+  //     const pinyinStr = pinyinList[j];
+  //     if (!dictionary[pinyinStr]) {
+  //       dictionary[pinyinStr] = [];
+  //     }
+  //     dictionary[pinyinStr].push(char);
+  //   }
+  // }
+  
+  // console.log(dictionary);
 
 //   const canvas = document.getElementById('game-board');
 //   const context = canvas.getContext('2d');
