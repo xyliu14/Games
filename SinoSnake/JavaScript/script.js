@@ -147,11 +147,11 @@ function gameLoop() {
   
   let screenWidth = window.innerWidth;
   if (screenWidth >= 768) {
-    snakeSpeed = 100;
-  } else if (screenWidth >= 480) {
     snakeSpeed = 120;
-  } else {
+  } else if (screenWidth >= 480) {
     snakeSpeed = 140;
+  } else {
+    snakeSpeed = 160;
   }
 
   setTimeout(gameLoop, snakeSpeed);
