@@ -30,8 +30,8 @@ let highScore = 0;
 
 const scoreText = document.getElementById('score-text');
 const highScoreText = document.getElementById('high-score-text');
-scoreText.textContent = 'Score: ' + score;
-highScoreText.textContent = 'Highest Score: ' + highScore;
+scoreText.innerHTML = 'Score<br>' + score;
+highScoreText.innerHTML = 'Best<br>' + highScore;
 
 const playAgainButton = document.getElementById('play-again-button');
 playAgainButton.addEventListener('click', function () {
@@ -302,8 +302,8 @@ function draw() {
 }
 
 function drawScore() {
-  scoreText.textContent = 'Score: ' + score;
-  highScoreText.textContent = 'Highest Score: ' + highScore;
+  scoreText.innerHTML = 'Score<br>' + score;
+  highScoreText.innerHTML = 'Best<br>' + highScore;
 }
 
 // function blinkTargetWord() {
