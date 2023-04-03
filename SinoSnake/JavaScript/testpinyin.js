@@ -2,14 +2,15 @@ const fs = require('fs');
 const pinyin = require('pinyin').default;
 
 
-const fileContents = fs.readFileSync('asset/chinese_characters.txt', 'utf8');
+const fileContents = fs.readFileSync('asset/chinese_words.txt', 'utf8');
 const lines = fileContents.split('\n');
-const characters = lines.map(line => line.replace('\n', ''));
+const words = lines.map(line => line.replace('\n', ''));
 
-const dictionary = characters.map(char => {
+const dictionary = words.map(char => {
   const pinyinStr = pinyin(char).flat().join('');
   return `${char},${pinyinStr}`;
 });
+console.log(dictionary);
 
 fs.writeFile('pinyin-dictionary.txt', dictionary.join('\n'), (err) => {
   if (err) {
