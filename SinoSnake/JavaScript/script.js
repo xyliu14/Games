@@ -296,7 +296,6 @@ function generateFoodItems() {
   }
 }
 
-
 function isOutOfBounds() {
     const head = snake[0];
     return head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
@@ -500,7 +499,6 @@ function onTouchMove(event) {
   // Prevent the default behavior (page scrolling) when swiping on the game canvas
   event.preventDefault();
 }
-
 
 document.addEventListener('keydown', (event) => {
   switch (event.key) {
