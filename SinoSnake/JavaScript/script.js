@@ -5,7 +5,7 @@ let gridSize = 32;
 let tileCount;
 
 let foodCount = 5; // Number of food items you want on the board
-let snakeSpeed = 100;
+let snakeSpeed;
 
 const background = 'rgb(241, 219, 191)';
 const snakeColor = 'rgb(170, 86, 86)';
