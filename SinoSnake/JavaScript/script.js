@@ -136,7 +136,6 @@ function gameLoop() {
   moveSnake();
   
   if (isOutOfBounds()) {
-    (console.log("snake out of bounds"));
     gameOver();
     isGameOver = true;
     return;
@@ -248,7 +247,6 @@ function handleFoodCollision(foodItem) {
   if (eatenLetter === requiredPinyinLetters[currentPinyinIndex]) {
     handleCorrectLetterCollision();
   } else {
-    console.log("ate a wrong letter");
     gameOver();
   }
 }
@@ -301,16 +299,12 @@ function generateFoodItems() {
 
 function isOutOfBounds() {
     const head = snake[0];
-    console.log("head x: " + head.x);
-    console.log(tileCount);
-    console.log("head y: " + head.y);
     return head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount;
 }
 
 function checkSnakeCollision() {
   for (let i = 1; i < snake.length; i++) {
     if (snake[0].x === snake[i].x && snake[0].y === snake[i].y) {
-      console.log("snake collision");
       gameOver(); // Call the gameOver function when the snake collides with itself
       return;
     }
