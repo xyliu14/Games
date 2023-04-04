@@ -193,7 +193,7 @@ canvas {
   }
   #instructions {
     font-size: 4vw;
-    bottom: 60px;
+    bottom: 8%;
     left: 50%;
     letter-spacing: 0.3vw;
     width: 80%;
@@ -217,7 +217,7 @@ canvas {
   }
   #instructions {
     font-size: 1vw;
-    bottom: 50px;
+    bottom: 8%;
     left: 51%;
     width: 35%;
     letter-spacing: 0.07vw;
