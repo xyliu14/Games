@@ -4,15 +4,19 @@ const context = canvas.getContext('2d');
 let gridSize = 32;
 let tileCount;
 
-let foodCount = 5; // Number of food items you want on the board
-let snakeSpeed;
+let foodCount = 3; // Number of food items you want on the board
+let snakeSpeed = 150;
 
 const background = 'rgb(241, 219, 191)';
 const snakeColor = 'rgb(170, 86, 86)';
 const foodColor = 'rgb(105, 130, 105)';
 // const targetWordColor = 'rgb(241, 219, 191)';
 const targetWordBackground = document.getElementById('progress-bar');
+const speedControl = document.getElementById('speed');
+const foodControl = document.getElementById('food');
 let correctLettersEaten = 0;
+let snakeSpeedControl = parseInt(speedControl.value);
+
 
 let snake;
 let velocity = { x: 0, y: 0 };
@@ -27,6 +31,7 @@ let targetWordPinyin;
 let isGameOver = false;
 let score = 0;
 let highScore = 0;
+let foodChanged = false;
 
 let touchStartX = null;
 let touchStartY = null;
@@ -54,7 +59,7 @@ async function loadFiles() {
   const chineseWordsResponse = await fetch('asset/chinese_words.txt');
   chineseWords = (await chineseWordsResponse.text()).split('\n');
 
-  const pinyinDictionaryResponse = await fetch('pinyin-dictionary2.txt');
+  const pinyinDictionaryResponse = await fetch('pinyin-dictionary.txt');
   const pinyinDictionaryText = await pinyinDictionaryResponse.text();
   pinyinDictionary = parsePinyinDictionary(pinyinDictionaryText);
 
@@ -136,15 +141,6 @@ function gameLoop() {
   checkFoodCollision();
   checkSnakeCollision();
   draw();
-  
-  let screenWidth = window.innerWidth;
-  if (screenWidth >= 768) {
-    snakeSpeed = 120;
-  } else if (screenWidth >= 480) {
-    snakeSpeed = 140;
-  } else {
-    snakeSpeed = 160;
-  }
 
   setTimeout(gameLoop, snakeSpeed);
 }
@@ -258,7 +254,6 @@ function handleCorrectLetterCollision() {
 
   if (currentPinyinIndex >= targetWordPinyin.length) {
     handleTargetWordComplete();
-    correctLettersEaten = 0;
     targetWordContainer.classList.add("glow");
     targetWordContainer.addEventListener('animationend', function() {
       targetWordContainer.classList.remove('glow');
@@ -271,10 +266,10 @@ function handleCorrectLetterCollision() {
 }
 
 function handleTargetWordComplete() {
-  // blinkTargetWord();
   currentPinyinIndex = 0;
-  clearEatenLettersDisplay();
+  correctLettersEaten = 0;
   eatenLetters = [];
+  clearEatenLettersDisplay();
   generateTargetWord(chineseWords, pinyinDictionary);
   generateFoodItems();
 }
@@ -346,11 +341,9 @@ function resizeCanvas() {
   } else if (screenWidth >= 480) {
     gridSize = 28;
     tileCount = 18;
-    foodCount = 4;
   } else {
     gridSize = 32;
     tileCount = 16;
-    foodCount = 3;
   }
   canvas.width = gridSize * tileCount;
   canvas.height = gridSize * tileCount;
@@ -425,12 +418,12 @@ function restartGame() {
 }
 
 function getPinyinForCharacter(word, pinyinDictionary) {
-  for (const pinyin in pinyinDictionary) {
-    if (pinyinDictionary[pinyin] == word) {
+  let pinyin;
+  for (pinyin in pinyinDictionary) {
+    if (pinyinDictionary[pinyin].includes(word)) {
       return pinyin;
     }
   }
-
   return ''; // Return an empty string if the character's pinyin is not found
 }
 
@@ -514,5 +507,24 @@ document.addEventListener('keydown', (event) => {
     case 'd':
       if (velocity.x === 0) velocity = { x: 1, y: 0 };
       break;
+  }
+});
+
+speedControl.addEventListener('input', () => {
+  snakeSpeedControl = parseInt(speedControl.value);
+  let screenWidth = window.innerWidth;
+  if (screenWidth >= 768) {
+    snakeSpeed = (1/snakeSpeedControl) * 300;
+  } else if (screenWidth >= 480) {
+    snakeSpeed = 80 * snakeSpeedControl;
+  } else {
+    snakeSpeed = 80 * snakeSpeedControl;
+  }
+});
+
+foodControl.addEventListener('change', () => {
+  foodCount = parseInt(foodControl.value);
+  if (foodCount){
+    generateFoodItems();
   }
 });
